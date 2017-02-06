@@ -69,7 +69,9 @@ def beam_search(graph, start, goal, beam_width):
 ## This function takes in a graph and a list of node names, and returns
 ## the sum of edge lengths along the path -- the total distance in the path.
 def path_length(graph, node_names):
-    raise NotImplementedError
+    return path_length_util(graph, node_names)
+
+    #raise NotImplementedError
 
 def branch_and_bound(graph, start, goal):
     raise NotImplementedError
@@ -304,6 +306,17 @@ def beam_search_util2(graph, start, goal, beam_width):
         # #print "newPathsList sorted by len" + str(newPaths)
     return []
 
+def path_length_util(graph, node_names):
+
+    result = 0
+    startNode = node_names[0]
+
+    for target in node_names[1:]:
+        edge_line = graph.get_edge(startNode, target)
+        result = result + edge_line.length
+        startNode = target
+    return result
+
 def quickSort(graph,goal,alist,sortType=0):
    quickSortHelper(graph,goal,alist,0,len(alist)-1,sortType)
 
@@ -345,6 +358,8 @@ def partition(graph,goal,alist,first,last):
 
 
    return rightmark
+
+
 
 
 

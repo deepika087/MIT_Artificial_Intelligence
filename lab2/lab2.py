@@ -74,7 +74,8 @@ def path_length(graph, node_names):
     #raise NotImplementedError
 
 def branch_and_bound(graph, start, goal):
-    raise NotImplementedError
+    return branch_and_bound_util(graph, start, goal)
+    #raise NotImplementedError
 
 def a_star(graph, start, goal):
     raise NotImplementedError
@@ -85,6 +86,9 @@ def a_star(graph, start, goal):
 ## consistent, but not admissible?
 
 def is_admissible(graph, goal):
+    """
+    edges=[Edge e1 from S to A with length 6, Edge e2 from A to B with length 4, Edge e3 from B to F with length 7, Edge e4 from C to D with length 6, Edge e5 from C to A with length 3, Edge e6 from E to D with length 7, Edge e7 from D to H with length 6, Edge e8 from S to C with length 2, Edge e9 from B to D with length 2, Edge e10 from E to G with length 25, Edge e11 from E to C with length 5]
+    """
     raise NotImplementedError
 
 def is_consistent(graph, goal):
@@ -359,7 +363,57 @@ def partition(graph,goal,alist,first,last):
 
    return rightmark
 
+#Branch and Bound is also called UCS. It selects cummulative minimum from all global fringe options available.
+def branch_and_bound_util(graph, start, goal):
+    queue = list([])
 
+    extended_list = []
+
+    queue.append([(start, 0)])
+
+    while(len(queue) > 0):
+        path = queue.pop(0) #Pop front always
+
+        startNode = path[0][0]
+        distance_so_far = path[0][1]
+
+        if (startNode == goal):
+            result = []
+            for item in path:
+                result.append(item[0])
+            return result[::-1]
+
+
+        if (startNode not in extended_list):
+            extended_list.append(startNode)
+
+            connectedNodes = graph.get_connected_nodes(startNode)
+
+            for c_node in connectedNodes:
+                c_edge = graph.get_edge(startNode, c_node)
+                if (c_node not in extended_list):
+                    temp_path=[(c_node, c_edge.length + distance_so_far)]
+                    temp_path += path
+                    queue.append(temp_path)
+
+            queue = sorted(queue, cmp=sortedCummulativePath)
+
+
+def sortedCummulativePath(x, y):
+    x=x[0]
+    y=y[0]
+
+    if (x[1] < y[1]):
+        return -1
+    elif (x[1] > y[1]):
+        return 1
+    else: #Values are equal
+        if (x[0] < y[0]):
+            return -1
+        elif (x[0] > y[0]):
+            return 1
+        else:
+            return 0
 
 
 

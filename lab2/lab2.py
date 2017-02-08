@@ -60,8 +60,8 @@ def hill_climbing(graph, start, goal):
 ## The k top candidates are to be determined using the 
 ## graph get_heuristic function, with lower values being better values.
 def beam_search(graph, start, goal, beam_width):
-    #return beam_search_util2(graph, start, goal, beam_width)
-    raise NotImplementedError
+    return beam_search_util(graph, start, goal, beam_width)
+    #raise NotImplementedError
 
 ## Now we're going to try optimal search.  The previous searches haven't
 ## used edge distances in the calculation.
@@ -78,7 +78,8 @@ def branch_and_bound(graph, start, goal):
     #raise NotImplementedError
 
 def a_star(graph, start, goal):
-    raise NotImplementedError
+    return a_star_util(graph, start, goal)
+    #raise NotImplementedError
 
 ## It's useful to determine if a graph has a consistent and admissible
 ## heuristic.  You've seen graphs with heuristics that are
@@ -142,6 +143,9 @@ def dfsUtil(graph, start, goal):
                 temp_path += path
                 queue.insert(0, temp_path)
 
+"""
+Chooses the best(minimum value) heuristic and delete the other options according to NPTEL but MIT assignment considers back tracking
+"""
 def hill_climbing_util(graph, start, goal):
     queue = list([])
 
@@ -149,6 +153,8 @@ def hill_climbing_util(graph, start, goal):
     extended_list = []
 
     while len(queue) > 0:
+        #print "queue : ", queue
+
         path = queue.pop(0) # always from first is removed, -1 will remove the last element from the list
 
         if (path[0][0] == goal):
@@ -185,72 +191,80 @@ def hill_climbing_util(graph, start, goal):
                             temp_queue.insert(i, temp_path)
             queue[:0] = temp_queue
 
+"""
+Chooses best available options and delete the rest. Uses only heuristic and minimum value of heursittic avaiable is picked
+"""
 def beam_search_util(graph, start, goal, beam_width):
-    MARKER = 999
-    #print graph
-    #print " Beam width = ", beam_width
-    queue = list([])
-    queue.append([(start, 0, MARKER)])
+    #print " Graph : ", graph
+    #print " start Node : ", start, " goal :", goal
 
+    queue = list([])
+
+    queue.append([(start, 0)])
     extended_list = []
 
-    while (len(queue) > 0):
+    temp_queue=[]
+    while len(queue) > 0:
+        #print "queue : ", queue
 
-        neighbour_heuristic = list()
-        while(True): #Last element of last tuple of last element in queue itself
-            path = queue.pop(0)
-            #print " Popped : ", path[0][0], " connected nodes = ", graph.get_connected_nodes(path[0][0])
+        path = queue.pop(0) # always from first is removed, -1 will remove the last element from the list
 
-            if (path[0][0] == goal):
-                #print " found path : ", path
-                result = []
-                for item in path:
-                    #print item
-                    result.append(item[0])
-                    #print " Result = ", result
-                print " Returning result : ", result[::-1]
-                return result[::-1]
+        #print " Popped : ", path[0][0]
+        if (reachedGoalState(queue, goal)):
+            result = []
+            _p = list(filter(lambda x: x[0][0] == goal, queue))
+            #print " Filtered result : ", _p
 
-            if (path[0][0] not in extended_list):
-                extended_list.append(path[0][0])
-                #print  " Extended list = ", extended_list
-                connectedNodes = graph.get_connected_nodes(path[0][0])
-                #print "========Heuristic======="
-                for node in connectedNodes:
-                    if (node not in extended_list):
-                        temp_path = [(node, graph.get_heuristic(node, goal), 0)]
-                        temp_path += path
-                        neighbour_heuristic.append(temp_path)
-                #        print " Node = ", node, " heuristic = ",graph.get_heuristic(node, goal)
-                #print " Heuristic received : ", neighbour_heuristic
+            for item in _p[0]:
+                result.append(item[0])
+            print " Found result : ", result[::-1]
+            return result[::-1]
 
-            if(path[-1][-1] == MARKER):
-                break
+        if (path[0][0] not in extended_list): #Explore the topic
+            extended_list.append(path[0][0])
+            connectedNodes = graph.get_connected_nodes(path[0][0])
 
-        #Now sort all neighbours according to heuristic. At this point all the neighbours of level above will be available
-        #print " Heuristic received : ", neighbour_heuristic
-        neighbour_heuristic = sorted(neighbour_heuristic, cmp=sortedHeuristic)
-        #print " Sorted heuristic ", neighbour_heuristic
+            for c_node in connectedNodes:
+                if (c_node not in extended_list):
+                    #print " Neighbour node of ", path[0][0], " is ", c_node, " heuristic = ", graph.get_heuristic(c_node, goal)
+                    temp_path = [(c_node, graph.get_heuristic(c_node, goal))]
+                    temp_path += path
+                    temp_queue.append(temp_path)
 
-        if (beam_width < len(neighbour_heuristic)):
-            k = min(beam_width, len(neighbour_heuristic))
-            neighbour_heuristic = neighbour_heuristic[0:k] #Get top elements only
+        if (len(temp_queue) > 1):
+            temp_queue = sorted(temp_queue, cmp=beamSearchComparator)
+        #print " Sorted queue : ", temp_queue
 
-        queue = neighbour_heuristic
-        #print " Effective size of queue = ", len(queue)
-        #print " Queue Before : ", queue
-        for i in range(0, len(queue)):
-            temp_marker_list = list(queue[i][-1])
-            temp_marker_list[-1] = 0
-            queue[i][-1] = tuple(temp_marker_list)
+        if (len(queue) == 0 and len(temp_queue) == 0):
+            break
 
-        if (len(queue) > 0):
-            temp_marker_list = list(queue[i][-1])
-            temp_marker_list[-1] = MARKER
-            queue[i][-1] = tuple(temp_marker_list)
-        #print " Queue After : ", queue
-        #print "---------------------------------------------------------------"
+        if (len(queue) == 0):
+            #print " =============Resetting the queue==============="
+            queue = temp_queue[0:beam_width]
+            temp_queue = []
+        #print " Trimmed queue is ", queue
     return []
+
+def reachedGoalState(queue, goal):
+    for _ in queue:
+        if (_[0][0] == goal):
+            return True
+    return False
+
+def beamSearchComparator(x, y):
+    x=x[0]
+    y=y[0]
+    if (x[1] < y[1]):
+        return 1
+    elif (x[1] > y[1]):
+        return -1
+    else:
+        if (x[0] < y[0]):
+            return -1
+        elif(x[1] > y[1]):
+            return 1
+        else:
+            return 0
 
 def sortedHeuristic(elementA, elementB):
 
@@ -363,7 +377,9 @@ def partition(graph,goal,alist,first,last):
 
    return rightmark
 
-#Branch and Bound is also called UCS. It selects cummulative minimum from all global fringe options available.
+"""
+Branch and Bound is also called UCS. It selects cummulative minimum from all global fringe options available.
+"""
 def branch_and_bound_util(graph, start, goal):
     queue = list([])
 
@@ -398,6 +414,40 @@ def branch_and_bound_util(graph, start, goal):
 
             queue = sorted(queue, cmp=sortedCummulativePath)
 
+"""
+Global options from the fringe will be considered. add sorting will be done via cummulative distance & overall heuristic
+"""
+def a_star_util(graph, start, goal):
+    queue = list([])
+
+    extended_list = []
+
+    queue.append([(start, 0)])
+
+    while(len(queue) > 0):
+        path = queue.pop(0) #Pop front always
+
+        startNode = path[0][0]
+        distance_so_far = path[0][1]
+
+        if (startNode == goal):
+            result = []
+            for item in path:
+                result.append(item[0])
+            return result[::-1]
+
+        if (startNode not in extended_list):
+            extended_list.append(startNode)
+
+            connectedNodes = graph.get_connected_nodes(startNode)
+            for c_node in connectedNodes:
+                c_edge = graph.get_edge(startNode, c_node)
+                if (c_node not in extended_list):
+                    temp_path=[(c_node, c_edge.length + distance_so_far + graph.get_heuristic(c_node, goal))]
+                    temp_path += path
+                    queue.append(temp_path)
+
+            queue = sorted(queue, cmp=sortedCummulativePath)
 
 def sortedCummulativePath(x, y):
     x=x[0]

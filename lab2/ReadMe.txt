@@ -12,6 +12,11 @@ but some cases do pass. However I think my logic is correct.
 
 Other searches :
 
-Best first search. 
+Best first search.
 
 Best First Search vs Hill Climbing : One of them is global
+
+
+How to run code.
+-> python tester.py
+I had to initialize bot h username and password equal to "". Don't remember which file it was either tester or tests.py
